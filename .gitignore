@@ -12,3 +12,9 @@ backup/
 # App banners for the webOS simulator preview only: other companies' logos, kept out of the repository.
 webos/samples/
 *.ipk
+
+# Temporary test and scratch scripts
+tools/patch_*.py
+tools/test_*.py
+tools/parse_demo.py
+*.png

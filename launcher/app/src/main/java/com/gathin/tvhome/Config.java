@@ -164,7 +164,7 @@ final class Config {
             Collections.sort(wallpapers);
         }
         int wallpaperMinutes = json != null ? integer(json, "wallpaper_minutes", 30, 0, 1440) : 30;
-        int wallpaperSeconds = json != null ? integer(json, "wallpaper_seconds", 0, 5, 86400) : 0;
+        int wallpaperSeconds = json != null ? integer(json, "wallpaper_seconds", 60, 5, 86400) : 60;
         long wallpaperIntervalMs = wallpaperSeconds > 0 ? wallpaperSeconds * 1000L : wallpaperMinutes * 60_000L;
         // On unless a theme says otherwise: a fresh install shows places with nothing to set up.
         boolean places = wallpaperOn && (json == null || bool(json, "places", true));

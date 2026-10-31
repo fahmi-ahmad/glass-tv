@@ -127,6 +127,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float heroBottom;
     private View btnInputs;
     private TextView btnWifi;
+    private PrayerTimes prayerTimes;
+    private TextView prayerNextText, timeSubuh, timeZohor, timeAsar, timeMaghrib, timeIsyak;
+    private View pillSubuh, pillZohor, pillAsar, pillMaghrib, pillIsyak;
+    private BadmintonScore badmintonScore;
+    private View badmintonCard;
+    private TextView bwfHeaderTitle, bwfHeaderBadge;
+    private View bwfMatch1Layout, bwfMatch2Layout, bwfDivider;
+    private TextView bwfCat1, bwfStatus1, bwfSets1, bwfPlayers1, bwfDetail1;
+    private TextView bwfCat2, bwfStatus2, bwfSets2, bwfPlayers2, bwfDetail2;
+    private List<BadmintonScore.Match> bwfMatches = Collections.emptyList();
+    private int bwfRotateIndex = 0;
+    private final Runnable bwfRotateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (bwfMatches.isEmpty()) return;
+            renderBadmintonMatches();
+            handler.postDelayed(this, 7000L);
+        }
+    };
     private TextView shamsiDate;
     private boolean shamsi;
     private String vpnApp;
@@ -367,6 +386,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         adapter = new AppAdapter(this, this, COLUMNS, cfg);
         grid.setAdapter(adapter);
+        initPrayerTimes();
+        initBadmintonScore();
 
         // tvOS layout: push the dock row towards the bottom of the screen, leaving room for
         // rows_below_dock grid rows under it; the rest of the grid stays below until you press Down.
@@ -783,8 +804,214 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (level >= TRIM_MEMORY_BACKGROUND) Backdrop.trim();
     }
 
+    private void initPrayerTimes() {
+        prayerNextText = findViewById(R.id.prayerNextText);
+        timeSubuh = findViewById(R.id.timeSubuh);
+        timeZohor = findViewById(R.id.timeZohor);
+        timeAsar = findViewById(R.id.timeAsar);
+        timeMaghrib = findViewById(R.id.timeMaghrib);
+        timeIsyak = findViewById(R.id.timeIsyak);
+
+        pillSubuh = findViewById(R.id.pillSubuh);
+        pillZohor = findViewById(R.id.pillZohor);
+        pillAsar = findViewById(R.id.pillAsar);
+        pillMaghrib = findViewById(R.id.pillMaghrib);
+        pillIsyak = findViewById(R.id.pillIsyak);
+
+        prayerTimes = new PrayerTimes(this, "KDH01");
+        prayerTimes.setListener(this::updatePrayerUI);
+        prayerTimes.start();
+    }
+
+    private void updatePrayerUI(PrayerTimes.TodayPrayer p) {
+        if (p == null) return;
+        if (prayerNextText != null) {
+            prayerNextText.setText(p.nextName + " " + p.nextTime + " (" + p.nextCountdown + ")");
+        }
+        if (timeSubuh != null) timeSubuh.setText(p.subuh);
+        if (timeZohor != null) timeZohor.setText(p.zohor);
+        if (timeAsar != null) timeAsar.setText(p.asar);
+        if (timeMaghrib != null) timeMaghrib.setText(p.maghrib);
+        if (timeIsyak != null) timeIsyak.setText(p.isyak);
+
+        View[] pills = {pillSubuh, pillZohor, pillAsar, pillMaghrib, pillIsyak};
+        int[] activeMap = {0, -1, 1, 2, 3, 4}; // map nextIndex (0=Subuh, 1=Syuruk, 2=Zohor, 3=Asar, 4=Maghrib, 5=Isyak) to pill index
+        int activePill = (p.nextIndex >= 0 && p.nextIndex < activeMap.length) ? activeMap[p.nextIndex] : -1;
+
+        for (int i = 0; i < pills.length; i++) {
+            if (pills[i] != null) {
+                pills[i].setBackgroundResource(i == activePill ? R.drawable.bg_prayer_pill_active : R.drawable.bg_prayer_pill_inactive);
+            }
+        }
+    }
+
+    private void initBadmintonScore() {
+        badmintonCard = findViewById(R.id.badmintonCard);
+        bwfHeaderTitle = findViewById(R.id.bwfHeaderTitle);
+        bwfHeaderBadge = findViewById(R.id.bwfHeaderBadge);
+
+        bwfMatch1Layout = findViewById(R.id.bwfMatch1Layout);
+        bwfCat1 = findViewById(R.id.bwfCat1);
+        bwfStatus1 = findViewById(R.id.bwfStatus1);
+        bwfSets1 = findViewById(R.id.bwfSets1);
+        bwfPlayers1 = findViewById(R.id.bwfPlayers1);
+        bwfDetail1 = findViewById(R.id.bwfDetail1);
+
+        bwfDivider = findViewById(R.id.bwfDivider);
+
+        bwfMatch2Layout = findViewById(R.id.bwfMatch2Layout);
+        bwfCat2 = findViewById(R.id.bwfCat2);
+        bwfStatus2 = findViewById(R.id.bwfStatus2);
+        bwfSets2 = findViewById(R.id.bwfSets2);
+        bwfPlayers2 = findViewById(R.id.bwfPlayers2);
+        bwfDetail2 = findViewById(R.id.bwfDetail2);
+
+        badmintonScore = new BadmintonScore();
+        badmintonScore.start(this::updateBadmintonUI);
+    }
+
+    private void updateBadmintonUI(String tournament, List<BadmintonScore.Match> matches) {
+        if (badmintonCard == null) return;
+        if (matches == null || matches.isEmpty()) {
+            badmintonCard.setVisibility(View.GONE);
+            return;
+        }
+
+        this.bwfMatches = matches;
+        if (bwfHeaderTitle != null) {
+            bwfHeaderTitle.setText("🏸 " + tournament.toUpperCase(Locale.US));
+        }
+
+        boolean hasLive = false;
+        boolean hasLiveMas = false;
+        for (BadmintonScore.Match m : matches) {
+            if (m.isLive()) {
+                hasLive = true;
+                if (m.isMalaysia) {
+                    hasLiveMas = true;
+                }
+            }
+        }
+
+        if (bwfHeaderBadge != null) {
+            if (hasLiveMas) {
+                bwfHeaderBadge.setText("🔴 LIVE 🇲🇾");
+                bwfHeaderBadge.setTextColor(0xFFFF5252);
+            } else if (hasLive) {
+                bwfHeaderBadge.setText("🔴 LIVE");
+                bwfHeaderBadge.setTextColor(0xFFFF5252);
+            } else {
+                bwfHeaderBadge.setText("JADUAL HARI INI");
+                bwfHeaderBadge.setTextColor(0xFF80CBC4);
+            }
+        }
+
+        renderBadmintonMatches();
+        badmintonCard.setVisibility(View.VISIBLE);
+
+        handler.removeCallbacks(bwfRotateRunnable);
+        if (matches.size() > 1) {
+            handler.postDelayed(bwfRotateRunnable, 7000L);
+        }
+    }
+
+    private void renderBadmintonMatches() {
+        if (bwfMatches.isEmpty()) return;
+
+        BadmintonScore.Match m1 = null;
+        BadmintonScore.Match m2 = null;
+
+        // Utamakan perlawanan LIVE (terutamanya pemain Malaysia)
+        BadmintonScore.Match liveMatch = null;
+        for (BadmintonScore.Match m : bwfMatches) {
+            if (m.isLive()) {
+                liveMatch = m;
+                break;
+            }
+        }
+
+        if (liveMatch != null) {
+            m1 = liveMatch;
+            List<BadmintonScore.Match> others = new ArrayList<>();
+            for (BadmintonScore.Match m : bwfMatches) {
+                if (m != liveMatch) others.add(m);
+            }
+            if (!others.isEmpty()) {
+                m2 = others.get(bwfRotateIndex % others.size());
+                bwfRotateIndex++;
+            }
+        } else {
+            int n = bwfMatches.size();
+            m1 = bwfMatches.get(bwfRotateIndex % n);
+            if (n > 1) {
+                m2 = bwfMatches.get((bwfRotateIndex + 1) % n);
+            }
+            bwfRotateIndex = (bwfRotateIndex + 2) % n;
+        }
+
+        bindMatchSlot(m1, bwfCat1, bwfStatus1, bwfSets1, bwfPlayers1, bwfDetail1, bwfMatch1Layout);
+        if (m2 != null) {
+            bindMatchSlot(m2, bwfCat2, bwfStatus2, bwfSets2, bwfPlayers2, bwfDetail2, bwfMatch2Layout);
+            if (bwfDivider != null) bwfDivider.setVisibility(View.VISIBLE);
+            if (bwfMatch2Layout != null) bwfMatch2Layout.setVisibility(View.VISIBLE);
+        } else {
+            if (bwfDivider != null) bwfDivider.setVisibility(View.GONE);
+            if (bwfMatch2Layout != null) bwfMatch2Layout.setVisibility(View.GONE);
+        }
+    }
+
+    private void bindMatchSlot(BadmintonScore.Match m, TextView tvCat, TextView tvStatus,
+                               TextView tvSets, TextView tvPlayers, TextView tvDetail, View layout) {
+        if (m == null || layout == null) return;
+
+        if (tvCat != null) {
+            String cat = "[" + m.category + "]";
+            if (m.isMalaysia) {
+                cat = "🇲🇾 " + cat;
+            }
+            tvCat.setText(cat);
+        }
+
+        if (tvStatus != null) {
+            if (m.isLive()) {
+                tvStatus.setText("🔴 LIVE");
+                tvStatus.setTextColor(0xFFFF5252);
+            } else {
+                tvStatus.setText(m.timeFormatted.isEmpty() ? "JADUAL" : "JAM " + m.timeFormatted);
+                tvStatus.setTextColor(0xFFFFD54F);
+            }
+        }
+
+        if (tvPlayers != null) {
+            tvPlayers.setText(m.home + " vs " + m.away);
+        }
+
+        if (tvSets != null) {
+            if (m.isLive()) {
+                tvSets.setText(m.homeSets + " - " + m.awaySets);
+                tvSets.setVisibility(View.VISIBLE);
+            } else {
+                tvSets.setVisibility(View.GONE);
+            }
+        }
+
+        if (tvDetail != null) {
+            if (m.isLive() && !m.detailedScore.isEmpty()) {
+                tvDetail.setText(m.detailedScore);
+                tvDetail.setVisibility(View.VISIBLE);
+            } else {
+                tvDetail.setVisibility(View.GONE);
+            }
+        }
+
+        layout.setVisibility(View.VISIBLE);
+    }
+
     @Override
     protected void onDestroy() {
+        if (prayerTimes != null) prayerTimes.stop();
+        if (badmintonScore != null) badmintonScore.stop();
+        handler.removeCallbacks(bwfRotateRunnable);
         super.onDestroy();
         wallDecoder.shutdownNow();
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
@@ -933,7 +1160,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // This runs on every layout pass, which during a grid scroll is every frame, so it keeps
         // its views and rectangles rather than looking them up or allocating each time.
         if (topRow == null) {
-            topRow = findViewById(R.id.topButtons);
+            topRow = findViewById(R.id.topRightBlock);
             topSettings = findViewById(R.id.btnSettings);
         }
         if (topRow == null || topSettings.getWidth() == 0) return;

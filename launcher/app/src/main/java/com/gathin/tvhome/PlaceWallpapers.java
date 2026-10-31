@@ -63,6 +63,7 @@ final class PlaceWallpapers {
 
     /** The pictures on disk, in the order Bing showed them; empty when none. */
     static List<File> list(Context ctx) {
+        ensureIslamicPlaces(ctx);
         List<File> out = new ArrayList<>();
         File d = dir(ctx);
         File[] files = d != null ? d.listFiles() : null;
@@ -74,12 +75,52 @@ final class PlaceWallpapers {
         return out;
     }
 
+    static void ensureIslamicPlaces(Context ctx) {
+        File d = dir(ctx);
+        if (d == null) return;
+        if (!d.exists()) d.mkdirs();
+        File check = new File(d, "00.txt");
+        boolean needsCopy = true;
+        if (check.exists() && check.length() > 0) {
+            try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(check))) {
+                String firstLine = r.readLine();
+                if (firstLine != null && firstLine.contains("Masjid")) {
+                    needsCopy = false;
+                }
+            } catch (Exception ignored) {}
+        }
+        if (needsCopy) {
+            deleteAll(d);
+            d.mkdirs();
+            copyAssets(ctx, "islamic-wallpapers", d);
+        }
+    }
+
+    private static void copyAssets(Context ctx, String assetDir, File targetDir) {
+        try {
+            String[] list = ctx.getAssets().list(assetDir);
+            if (list == null) return;
+            for (String file : list) {
+                File dest = new File(targetDir, file);
+                try (InputStream in = ctx.getAssets().open(assetDir + "/" + file);
+                     OutputStream out = new FileOutputStream(dest)) {
+                    byte[] buf = new byte[8192];
+                    int r;
+                    while ((r = in.read(buf)) > 0) out.write(buf, 0, r);
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "copyAssets failed: " + e);
+        }
+    }
+
     /** True when a week has passed since the last successful refresh, or there are no pictures yet. */
     static boolean due(Context ctx) {
         long last = prefs(ctx).getLong("refreshed_at", 0);
         // Pictures kept under earlier rules are fetched again once, under the current ones.
         if (prefs(ctx).getInt("rules", 0) < RULES) return true;
-        return System.currentTimeMillis() - last >= REFRESH_MS || list(ctx).isEmpty();
+        ensureIslamicPlaces(ctx);
+        return false;
     }
 
     /**

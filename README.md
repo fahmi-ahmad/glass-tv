@@ -15,6 +15,9 @@ every week.
 
 ## What you get
 
+- **Islamic Edition & Dynamic Mosque Wallpapers.** Rotates through iconic mosques (Masjidil Haram Makkah, Masjid Nabawi Madinah, Kubah As-Sakhrah Jerusalem, Masjid Putra Putrajaya, Masjid Kristal Terengganu, Masjid Sultan Ahmed Istanbul) with live descriptions and locations directly on the home shelf.
+- **JAKIM Prayer Times Widget.** Real-time Malaysian prayer times (Waktu Solat JAKIM) with live countdown to the next prayer, highlighting the active prayer cleanly beneath the Wi-Fi status button.
+- **BWF Badminton Live Scores & Schedule.** Real-time match-by-match BWF World Tour scores and schedules. Automatically prioritizes Malaysian players (🇲🇾 [MAS]), displays full doubles player pairings, pins ongoing LIVE matches with set scores, and cycles upcoming matches smoothly.
 - **Keeps itself clean.** Every 15 days, while Home sits idle, the TV clears its app caches, where the Play
   Store leaves gigabytes of download leftovers that can make apps open to a blank screen. No computer needed,
   sign-ins and app data are never touched; the TV asks once to allow it.
