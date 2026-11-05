@@ -94,7 +94,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean gliderOnPill;
     private final int[] pillAt = new int[2], rootAt = new int[2];
     /** The top-right buttons and the two rectangles used to line them up with the dock. */
-    private View topRow, topSettings;
+    private View topRow, topEnd;
     private final Rect alignCard = new Rect(), alignButton = new Rect();
     /** How much of the space between the side paddings the top shelf may use. */
     private static final float HERO_WIDTH_SHARE = 0.40f;
@@ -365,7 +365,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         // The grid only shows the shape on the tray.
         glider.addCompanion(grid, tray.area);
-        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnSettings}) {
+        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnSettings, R.id.btnPower}) {
             View pill = findViewById(id);
             pill.setBackground(new GlassDrawable(pill, 21 * density, density, glider));
             glider.addCompanion(pill);
@@ -453,6 +453,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             showModuleCards();
             return true;
         });
+        View btnPower = findViewById(R.id.btnPower);
+        btnPower.setOnClickListener(v -> showPowerMenu());
 
         // Keep focus on the top bar at its ends and at the top: Android's focus finder would otherwise
         // jump to a tile far below when there is nothing in that direction.
@@ -471,11 +473,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         || (v.getId() == R.id.btnSettings && btnInputs.getVisibility() != View.VISIBLE
                             && btnWifi.getVisibility() != View.VISIBLE);
             }
-            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == R.id.btnSettings;
+            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == R.id.btnPower;
         };
         btnInputs.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
+        btnPower.setOnKeyListener(pillKeys);
 
         // Hide the glass when focus leaves the tiles.
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> {
@@ -1152,8 +1155,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * Lines the top-right buttons up with the dock: the Settings circle's right edge sits on the
-     * right edge of the last dock card, and Inputs follows on its left. Card width follows the
+     * Lines the top-right buttons up with the dock: the Power circle's right edge sits on the
+     * right edge of the last dock card, and the others follow on its left. Card width follows the
      * column count and the screen, so the edge is measured rather than written down.
      */
     private void alignTopButtons() {
@@ -1161,9 +1164,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // its views and rectangles rather than looking them up or allocating each time.
         if (topRow == null) {
             topRow = findViewById(R.id.topRightBlock);
-            topSettings = findViewById(R.id.btnSettings);
+            topEnd = findViewById(R.id.btnPower);
         }
-        if (topRow == null || topSettings.getWidth() == 0) return;
+        if (topRow == null || topEnd.getWidth() == 0) return;
         RecyclerView.ViewHolder last = grid.findViewHolderForAdapterPosition(COLUMNS - 1);
         if (last == null) return;
         View card = last.itemView.findViewById(R.id.card);
@@ -1172,8 +1175,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // must not be counted twice.
         alignCard.set(0, 0, card.getWidth(), card.getHeight());
         root.offsetDescendantRectToMyCoords(card, alignCard);
-        alignButton.set(0, 0, topSettings.getWidth(), topSettings.getHeight());
-        root.offsetDescendantRectToMyCoords(topSettings, alignButton);
+        alignButton.set(0, 0, topEnd.getWidth(), topEnd.getHeight());
+        root.offsetDescendantRectToMyCoords(topEnd, alignButton);
         float shift = alignCard.right - alignButton.right;
         if (Math.abs(topRow.getTranslationX() - shift) >= 1f) topRow.setTranslationX(shift);
     }
@@ -1193,7 +1196,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private boolean isTopPill(View v) {
         int id = v.getId();
-        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnSettings;
+        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnSettings || id == R.id.btnPower;
     }
 
     /** Sends the focus shape onto a pill: from a tile it glides up and narrows into the pill. */
@@ -1927,6 +1930,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         width = Math.max(width, panel.getMeasuredWidth());
 
         showMenu(panel, rows, anchor, width, false);
+    }
+
+    /** The Power menu, hanging under the Power button with its right edge lined up to the button's. */
+    private void showPowerMenu() {
+        if (openMenu != null) return;
+        View anchor = findViewById(R.id.btnPower);
+        FrameLayout panel = (FrameLayout) getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
+        LinearLayout rows = panel.findViewById(R.id.rows);
+        Runnable close = () -> closeMenu(true);
+        addInputRow(rows, close, R.drawable.ic_restart, getString(R.string.restart_tv), -1,
+                () -> sendPower(CacheCleaner.RESTART));
+        addInputRow(rows, close, R.drawable.ic_power, getString(R.string.shutdown_tv), -1,
+                () -> sendPower(CacheCleaner.SHUTDOWN));
+        int width = (int) (190 * density);
+        showMenu(panel, rows, anchor, width, false);
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) panel.getLayoutParams();
+        lp.leftMargin = Math.max(0, menuAt[0] - menuGliderAt[0] + anchor.getWidth() - width);
+        panel.setLayoutParams(lp);
+    }
+
+    private void sendPower(String command) {
+        CacheCleaner.power(this, command, message -> runOnUiThread(
+                () -> Toast.makeText(this, message, Toast.LENGTH_LONG).show()));
     }
 
     /**

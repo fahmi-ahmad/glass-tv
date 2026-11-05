@@ -223,6 +223,17 @@
                         android:contentDescription="@string/settings"
                         android:drawableStart="@drawable/ic_settings"
                         android:nextFocusDown="@+id/grid" />
+
+                    <TextView
+                        android:id="@+id/btnPower"
+                        style="@style/TopMenuButton"
+                        android:layout_width="42dp"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="0dp"
+                        android:drawablePadding="0dp"
+                        android:contentDescription="@string/power"
+                        android:drawableStart="@drawable/ic_power"
+                        android:nextFocusDown="@+id/grid" />
                 </LinearLayout>
 
                 <!-- Waktu Solat JAKIM (Bawah Wi-Fi Sebelah Kanan) -->

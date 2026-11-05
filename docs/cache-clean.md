@@ -27,9 +27,12 @@ only accepts connections it has allowed this way.
 The TV forgets an allowed key that has not connected for 7 days, so between cleans Glass TV checks in every
 3 days: it connects and disconnects, running nothing, and the TV keeps trusting it without asking again.
 
-It is built not to get in the way: it only ever sends that one command, never while an app is in front;
-when debugging is off it does nothing; it tries at most once a day; and after three unanswered or declined
-prompts it stops asking.
+It is built not to get in the way: on its own it only ever sends that one command, never while an app is in
+front; when debugging is off it does nothing; it tries at most once a day; and after three unanswered or
+declined prompts it stops asking.
+
+The Power button on Home uses the same trusted connection to send `svc power reboot` or `svc power shutdown`,
+only when someone picks Restart TV or Shutdown TV on the remote.
 
 - Change how often with `"cache_clean_days"` in the theme's `config.json` (1 to 90); `0` turns it off.
 - Clean right now, and show the prompt again: `tools/tv.py 'touch /sdcard/Android/data/com.gathin.tvhome/files/clean-now'`,

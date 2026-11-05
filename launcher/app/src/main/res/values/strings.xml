@@ -4,6 +4,11 @@
     <string name="inputs">Inputs</string>
     <string name="wifi">Wi-Fi</string>
     <string name="settings">Settings</string>
+    <string name="power">Power</string>
+    <string name="restart_tv">Restart TV</string>
+    <string name="shutdown_tv">Shutdown TV</string>
+    <string name="power_not_allowed">Allow USB debugging on the TV\'s prompt, then try again.</string>
+    <string name="power_no_debugging">Could not do that: turn on network debugging in Developer options.</string>
     <string name="choose_input">Inputs</string>
     <string name="connected">Connected</string>
     <string name="standby">Standby</string>

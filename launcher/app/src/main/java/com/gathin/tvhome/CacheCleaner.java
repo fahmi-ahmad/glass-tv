@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -30,6 +31,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAKeyGenParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.function.IntConsumer;
 
 /**
  * Empties the TV's app caches every few weeks, from the TV itself. The Play Store leaves gigabytes of
@@ -38,10 +40,13 @@ import java.security.spec.X509EncodedKeySpec;
  * service, the one the setup used over Wi-Fi, to run {@code pm trim-caches}. The first time, the TV
  * shows "Allow USB debugging?" once.
  *
- * Built so it cannot hurt the TV: it only ever sends that one command, which can reach nothing but
- * cache folders (no app data, sign-ins or settings); it runs only while Home is idle on screen; and
- * when debugging is off or the prompt is declined it gives up quietly, tries at most once a day, and
- * stops asking after a few declines.
+ * Built so it cannot hurt the TV: on its own it only ever sends that one command, which can reach
+ * nothing but cache folders (no app data, sign-ins or settings); it runs only while Home is idle on
+ * screen; and when debugging is off or the prompt is declined it gives up quietly, tries at most once
+ * a day, and stops asking after a few declines.
+ *
+ * The same connection also carries the power menu's {@link #RESTART} and {@link #SHUTDOWN}, sent only
+ * when someone picks them on the remote: no installed app may restart or power off a TV by itself.
  */
 final class CacheCleaner {
     private static final String TAG = "TvHome.Clean";
@@ -50,6 +55,9 @@ final class CacheCleaner {
     static final long IDLE_MS = 20_000;
     /** The one command this ever sends. */
     private static final String COMMAND = "shell:pm trim-caches 999999999999";
+    /** The power menu's commands: an orderly restart or power-off, as the TV's own menu would do. */
+    static final String RESTART = "shell:svc power reboot", SHUTDOWN = "shell:svc power shutdown";
+    private static volatile boolean powering;
     private static final long DAY_MS = 24L * 60 * 60 * 1000;
     /** Storage this full cleans early: apps start failing well before Android itself steps in. */
     private static final int FULL_PERCENT = 80;
@@ -117,6 +125,36 @@ final class CacheCleaner {
                 running = false;
             }
         }, "cache-clean").start();
+    }
+
+    /**
+     * Sends {@link #RESTART} or {@link #SHUTDOWN}, off the main thread. May show the "Allow USB
+     * debugging?" prompt the first time. {@code failed} gets the message to show, on this background
+     * thread; it is not called when the command went through, because the TV is then going down.
+     */
+    static void power(Context ctx, String command, IntConsumer failed) {
+        if (powering) return;
+        powering = true;
+        final Context app = ctx.getApplicationContext();
+        new Thread(() -> {
+            try {
+                // As in clean(): the connection that asked is not always the one let through.
+                if (!shell(app, true, command) && !shell(app, false, command)) {
+                    failed.accept(R.string.power_not_allowed);
+                }
+            } catch (ConnectException | SocketTimeoutException e) {
+                Log.i(TAG, "cannot reach the TV's debugging service: " + e);
+                failed.accept(R.string.power_no_debugging);
+            } catch (IOException e) {
+                // The TV dropped the connection as it went down: the command worked.
+                Log.i(TAG, "connection closed after power command: " + e);
+            } catch (Exception e) {
+                Log.w(TAG, "power command failed: " + e);
+                failed.accept(R.string.power_no_debugging);
+            } finally {
+                powering = false;
+            }
+        }, "power").start();
     }
 
     private static void clean(Context ctx, int before) {
