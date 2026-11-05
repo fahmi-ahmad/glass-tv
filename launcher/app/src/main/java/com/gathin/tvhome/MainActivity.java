@@ -677,6 +677,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onStop() {
         hiddenSinceResume = true;
         handler.removeCallbacks(cacheClean);
+        // No scores while another app is in front: the next resume fetches them fresh.
+        if (badmintonScore != null) badmintonScore.stop();
+        handler.removeCallbacks(bwfRotateRunnable);
         super.onStop();
     }
 
@@ -699,6 +702,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         handler.postDelayed(minuteTick, MINUTE_MS);
         handler.removeCallbacks(cacheClean);
         handler.postDelayed(cacheClean, CacheCleaner.IDLE_MS);
+        if (badmintonScore != null) badmintonScore.start(this::updateBadmintonUI);
         hiddenSinceResume = false;
     }
 

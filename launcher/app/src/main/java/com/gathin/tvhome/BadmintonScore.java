@@ -78,22 +78,28 @@ public class BadmintonScore {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Listener listener;
     private volatile boolean running;
+    /** Raised by each start, so a fetch still running from before a stop cannot begin a second loop. */
+    private volatile int generation;
 
     private final Runnable pollTask = new Runnable() {
         @Override
         public void run() {
             if (!running) return;
+            final int started = generation;
             new Thread(() -> {
                 fetchAndNotify();
-                if (running) {
+                if (running && started == generation) {
                     handler.postDelayed(pollTask, POLL_INTERVAL_MS);
                 }
             }, "badminton-poll").start();
         }
     };
 
+    /** Fetches at once and then every 45 seconds. Does nothing when already running. */
     public void start(Listener l) {
+        if (running) return;
         this.listener = l;
+        this.generation++;
         this.running = true;
         handler.post(pollTask);
     }
@@ -104,6 +110,7 @@ public class BadmintonScore {
     }
 
     private void fetchAndNotify() {
+        Log.i(TAG, "refreshing scores");
         try {
             List<Match> matches = fetchFeed(TODAY_FEED);
             String tournamentName = "BWF World Tour";
