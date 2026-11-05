@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Screensaver (BackgroundDream): Home's backgrounds full screen, the new one fading in over the
+     old, with the time and the place's name in a bottom corner. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF000000">
+
+    <ImageView
+        android:id="@+id/dreamUnder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
+
+    <ImageView
+        android:id="@+id/dreamOver"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:id="@+id/dreamCaption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="40dp"
+        android:orientation="vertical"
+        android:gravity="start"
+        android:alpha="0">
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format12Hour="h:mm"
+            android:format24Hour="HH:mm"
+            android:textColor="#FFFFFFFF"
+            android:textSize="44sp"
+            android:fontFamily="@font/outfit"
+            android:fontVariationSettings="'wght' 300"
+            android:includeFontPadding="false"
+            android:shadowColor="#CC000000"
+            android:shadowRadius="12"
+            android:shadowDy="2" />
+
+        <TextView
+            android:id="@+id/dreamPlace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#FFFFFFFF"
+            android:textSize="18sp"
+            android:fontFamily="@font/outfit"
+            android:fontVariationSettings="'wght' 500"
+            android:includeFontPadding="false"
+            android:shadowColor="#CC000000"
+            android:shadowRadius="10"
+            android:shadowDy="2" />
+
+        <TextView
+            android:id="@+id/dreamWhere"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="#D9FFFFFF"
+            android:textSize="12sp"
+            android:fontFamily="@font/outfit"
+            android:fontVariationSettings="'wght' 500"
+            android:letterSpacing="0.14"
+            android:textAllCaps="true"
+            android:includeFontPadding="false"
+            android:shadowColor="#CC000000"
+            android:shadowRadius="10"
+            android:shadowDy="2" />
+    </LinearLayout>
+</FrameLayout>

@@ -95,6 +95,19 @@
             </intent-filter>
         </service>
 
+        <!-- Screensaver of Home's own backgrounds: pick it in Settings, or `settings put secure
+             screensaver_components com.gathin.tvhome/.BackgroundDream` over adb. -->
+        <service
+            android:name=".BackgroundDream"
+            android:label="@string/dream_backgrounds_name"
+            android:exported="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
         <!-- The remote's Input button (KEYCODE_TV) opens the input switcher; see InputKeyService. -->
         <service
             android:name=".InputKeyService"

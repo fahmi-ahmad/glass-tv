@@ -287,7 +287,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // week's places have arrived.
         if (placesMode) wallpapers = PlaceWallpapers.list(this);
         if (!wallpapers.isEmpty()) showNextWallpaper(false);
-        else if (cfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(cfg.wallpaper), false);
+        else if (cfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(this, cfg.wallpaper), false);
         glass = findViewById(R.id.glass);
         ambient = findViewById(R.id.ambient);
         Backdrop.setWorker(wallDecoder, handler);
@@ -508,9 +508,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * A theme's full-screen picture behind everything. Decoded once, downsampled to the screen so a 4K
      * JPEG costs a 1080p bitmap at most (about 8 MB), which is the price of a wallpaper on a 1 GB TV.
      */
-    private android.graphics.Bitmap decodeWallpaper(File file) {
+    static android.graphics.Bitmap decodeWallpaper(android.content.Context ctx, File file) {
         try {
-            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            android.util.DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
             android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
             opts.inJustDecodeBounds = true;
             android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
@@ -590,7 +590,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (placeName == null) setPlace(file);
         final boolean firstPicture = wallBitmap == null;
         wallDecoder.execute(() -> {
-            android.graphics.Bitmap bmp = decodeWallpaper(file);
+            android.graphics.Bitmap bmp = decodeWallpaper(this, file);
             // After the first picture, the blur is made here, before the picture is shown, so the glass
             // changes with the wallpaper rather than after it. The first picture of a fresh start does
             // not wait for its blur: Home is held for it, and the glass catches up a moment later.
