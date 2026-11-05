@@ -510,7 +510,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginTop="6dp">
+                        android:layout_marginTop="3dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -592,8 +592,8 @@
                         android:id="@+id/bwfDivider"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginTop="6dp"
-                        android:layout_marginBottom="6dp"
+                        android:layout_marginTop="3dp"
+                        android:layout_marginBottom="3dp"
                         android:background="#26FFFFFF"
                         android:visibility="gone" />
 
